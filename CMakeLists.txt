@@ -30,6 +30,9 @@ INCLUDE(macros)
 
 FIND_PACKAGE(ROOT REQUIRED COMPONENTS Geom)
 
+FIND_PACKAGE(Eigen3 REQUIRED)
+INCLUDE_DIRECTORIES(EIGEN3_INCLUDE_DIR)
+
 # either, the environment variable RAVEPATH has to be specified, and RAVE's pkgConfig will be used to determine everything we need
 # or, RAVE_LDFLAGS, RAVE_INCLUDE_DIRS and RAVE_CFLAGS have to be set via the command-line
 
