@@ -27,6 +27,8 @@
 
 #include "TDecompChol.h"
 
+#include "RootEigenTransformations.h"
+
 namespace genfit {
 
 void MeasuredStateOnPlane::Print(Option_t*) const {
@@ -86,16 +88,20 @@ MeasuredStateOnPlane calcAverageState(const MeasuredStateOnPlane& forwardState, 
 #if 0
   // For ease of understanding, here's a very explicit implementation
   // that uses the textbook algorithm:
-  TMatrixDSym fCovInv, bCovInv, smoothed_cov;
-  tools::invertMatrix(forwardState.getCov(), fCovInv);
-  tools::invertMatrix(backwardState.getCov(), bCovInv);
 
-  tools::invertMatrix(fCovInv + bCovInv, smoothed_cov);  // one temporary TMatrixDSym
+  auto fwState(rootVectorToEigenVector(forwardState.getState()));
+  auto bwState(rootVectorToEigenVector(backwardState.getState()));
 
-  MeasuredStateOnPlane retVal(forwardState);
-  retVal.setState(smoothed_cov*(fCovInv*forwardState.getState() + bCovInv*backwardState.getState())); // four temporary TVectorD's
-  retVal.setCov(smoothed_cov);
-  return retVal;
+  auto fwCovInverse(rootMatrixSymToEigenMatrix(forwardState.getCov()).inverse());
+  auto bwCovInverse(rootMatrixSymToEigenMatrix(backwardState.getCov()).inverse());
+
+  auto avgCov = (fwCovInverse + bwCovInverse).inverse();
+  auto avgState = avgCov * (fwCovInverse * fwState + bwCovInverse * bwState);
+
+  MeasuredStateOnPlane returnValue(forwardState);
+  returnValue.setState(eigenVectorToRootVector(avgState));
+  returnValue.setCov(eigenMatrixToRootMatrixSym(avgCov));
+  return returnValue;
 #endif
 
   // This is a numerically stable implementation of the averaging
