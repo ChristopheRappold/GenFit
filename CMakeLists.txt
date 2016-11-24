@@ -359,6 +359,7 @@ if(GTEST_FOUND)
 			gtest/TestMaterialEffects.cpp
 			gtest/TestMeasuredStateOnPlane.cpp
 			gtest/TestRKTrackRep.cpp
+			gtest/TestRootEigenTransformations.cpp
 			)
 	TARGET_LINK_LIBRARIES(gtests ${GTEST_BOTH_LIBRARIES} ${ROOT_LIBS} ${PROJECT_NAME})  # gtest gtest_main
 	MESSAGE(STATUS  ${GTEST_INCLUDE_DIRS})
