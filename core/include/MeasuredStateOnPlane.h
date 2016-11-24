@@ -90,6 +90,9 @@ class MeasuredStateOnPlane : public StateOnPlane {
  * @brief Calculate weighted average between two MeasuredStateOnPlanes
  */
 MeasuredStateOnPlane calcAverageState(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState);
+MeasuredStateOnPlane calcAverageStateTrivialSelfMade(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState);
+MeasuredStateOnPlane calcAverageStateTrivialEigen(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState);
+MeasuredStateOnPlane calcAverageStateSmartEigen(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState);
 
 
 inline void MeasuredStateOnPlane::swap(MeasuredStateOnPlane& other) {

@@ -75,19 +75,12 @@ void MeasuredStateOnPlane::blowUpCov(double blowUpFac, bool resetOffDiagonals, d
 }
 
 
-MeasuredStateOnPlane calcAverageState(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState) {
+MeasuredStateOnPlane calcAverageStateTrivialEigen(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState) {
   // check if both states are defined in the same plane
   if (forwardState.getPlane() != backwardState.getPlane()) {
     Exception e("KalmanFitterInfo::calcAverageState: forwardState and backwardState are not defined in the same plane.", __LINE__,__FILE__);
     throw e;
   }
-
-  // This code is called a lot, so some effort has gone into reducing
-  // the number of temporary objects being constructed.
-
-#if 0
-  // For ease of understanding, here's a very explicit implementation
-  // that uses the textbook algorithm:
 
   auto fwState(rootVectorToEigenVector(forwardState.getState()));
   auto bwState(rootVectorToEigenVector(backwardState.getState()));
@@ -102,7 +95,65 @@ MeasuredStateOnPlane calcAverageState(const MeasuredStateOnPlane& forwardState, 
   returnValue.setState(eigenVectorToRootVector(avgState));
   returnValue.setCov(eigenMatrixToRootMatrixSym(avgCov));
   return returnValue;
-#endif
+}
+
+MeasuredStateOnPlane calcAverageStateSmartEigen(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState) {
+  if (forwardState.getPlane() != backwardState.getPlane()) {
+    Exception e("KalmanFitterInfo::calcAverageState: forwardState and backwardState are not defined in the same plane.", __LINE__,__FILE__);
+    throw e;
+  }
+
+  const auto fwState(rootVectorToEigenVector(forwardState.getState()));
+  const auto bwState(rootVectorToEigenVector(backwardState.getState()));
+
+  const auto fwCov(rootMatrixSymToEigenMatrix(forwardState.getCov()));
+  const auto bwCov(rootMatrixSymToEigenMatrix(backwardState.getCov()));
+
+  const Eigen::Matrix<double, 5, 5> LfwInv(fwCov.llt().matrixL().solve(Eigen::Matrix<double, 5, 5>::Identity(5, 5)));
+  const Eigen::Matrix<double, 5, 5> LbwInv(bwCov.llt().matrixL().solve(Eigen::Matrix<double, 5, 5>::Identity(5, 5)));
+
+  Eigen::Matrix<double, 10, 5> A;
+  A.block<5, 5>(0, 0) = LfwInv;
+  A.block<5, 5>(5, 0) = LbwInv;
+  Eigen::Matrix<double, 10, 1> b;
+  b.block<5, 1>(0, 0) = LfwInv * fwState;
+  b.block<5, 1>(5, 0) = LbwInv * bwState;
+
+  const Eigen::ColPivHouseholderQR<Eigen::Matrix<double, 10, 5>> QRDecomposed(A);
+  Eigen::Matrix<double, 5, 5> Rinv = (QRDecomposed.matrixR().block<5, 5>(0, 0).template triangularView<Eigen::Upper>());
+  Rinv = Rinv.inverse();
+  const Eigen::Matrix<double, 5, 5> Caverage = (Rinv * Rinv.transpose());
+  const Eigen::Matrix<double, 5, 1> Saverage = QRDecomposed.solve(b).block<5, 1>(0, 0);
+
+  return MeasuredStateOnPlane(
+          eigenVectorToRootVector(Saverage),
+          eigenMatrixToRootMatrixSym(Caverage),
+          forwardState.getPlane(),
+          forwardState.getRep(),
+          forwardState.getAuxInfo());
+}
+
+MeasuredStateOnPlane calcAverageStateTrivialSelfMade(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState) {
+  TMatrixDSym fCovInv, bCovInv, smoothed_cov;
+  tools::invertMatrix(forwardState.getCov(), fCovInv);
+  tools::invertMatrix(backwardState.getCov(), bCovInv);
+  tools::invertMatrix(fCovInv + bCovInv, smoothed_cov);  // one temporary TMatrixDSym
+  MeasuredStateOnPlane retVal(forwardState);
+  retVal.setState(smoothed_cov*(fCovInv*forwardState.getState() + bCovInv*backwardState.getState())); // four temporary TVectorD's
+  retVal.setCov(smoothed_cov);
+  return retVal;
+
+}
+
+MeasuredStateOnPlane calcAverageState(const MeasuredStateOnPlane& forwardState, const MeasuredStateOnPlane& backwardState) {
+  // check if both states are defined in the same plane
+  if (forwardState.getPlane() != backwardState.getPlane()) {
+    Exception e("KalmanFitterInfo::calcAverageState: forwardState and backwardState are not defined in the same plane.", __LINE__,__FILE__);
+    throw e;
+  }
+
+  // This code is called a lot, so some effort has gone into reducing
+  // the number of temporary objects being constructed.
 
   // This is a numerically stable implementation of the averaging
   // process.  We write S1, S2 for the upper diagonal square roots
@@ -195,11 +246,14 @@ MeasuredStateOnPlane calcAverageState(const MeasuredStateOnPlane& forwardState, 
     }
     b.GetMatrixArray()[i] = sum;
   }
-  return MeasuredStateOnPlane(b,
-			      TMatrixDSym(TMatrixDSym::kAtA, inv),
-			      forwardState.getPlane(),
-			      forwardState.getRep(),
-			      forwardState.getAuxInfo());
+
+  return MeasuredStateOnPlane(
+          b,
+          TMatrixDSym(TMatrixDSym::kAtA, inv),
+          forwardState.getPlane(),
+          forwardState.getRep(),
+          forwardState.getAuxInfo());
+
 }
 
 
