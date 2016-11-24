@@ -357,6 +357,7 @@ if(GTEST_FOUND)
 	ADD_EXECUTABLE(gtests
 			gtest/TestConstField.cpp
 			gtest/TestMaterialEffects.cpp
+			gtest/TestMeasuredStateOnPlane.cpp
 			gtest/TestRKTrackRep.cpp
 			)
 	TARGET_LINK_LIBRARIES(gtests ${GTEST_BOTH_LIBRARIES} ${ROOT_LIBS} ${PROJECT_NAME})  # gtest gtest_main
