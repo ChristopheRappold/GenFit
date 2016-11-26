@@ -62,10 +62,10 @@
 //#include <callgrind/callgrind.h>
 
 
-enum e_testStatus {
-  kPassed,
-  kFailed,
-  kException
+enum class TestStatus {
+  Passed,
+  Failed,
+  Exception
 };
 
 void handler(int sig) {
@@ -114,8 +114,8 @@ int randomSign() {
 }
 
 
-e_testStatus compareMatrices(const TMatrixTBase<double>& A, const TMatrixTBase<double>& B, double maxRelErr) {
-  e_testStatus retVal = kPassed;
+TestStatus compareMatrices(const TMatrixTBase<double>& A, const TMatrixTBase<double>& B, double maxRelErr) {
+  TestStatus retVal = TestStatus::Passed;
 
   // search max abs value
   double max(0);
@@ -135,7 +135,7 @@ e_testStatus compareMatrices(const TMatrixTBase<double>& A, const TMatrixTBase<d
         double relErr = A(i,j)/B(i,j) - 1;
         if ( fabs(relErr) > maxRelErr ) {
           std::cout << "compareMatrices: A("<<i<<","<<j<<") = " << A(i,j) << "  B("<<i<<","<<j<<") = " << B(i,j) << "     absErr = " << absErr << "    relErr = " << relErr << "\n";
-          retVal = kFailed;
+          retVal = TestStatus::Failed;
         }
       }
     }
@@ -143,35 +143,35 @@ e_testStatus compareMatrices(const TMatrixTBase<double>& A, const TMatrixTBase<d
   return retVal;
 }
 
-e_testStatus isCovMatrix(TMatrixTBase<double>& cov) {
+TestStatus isCovMatrix(TMatrixTBase<double>& cov) {
 
   if (!(cov.IsSymmetric())) {
     std::cout << "isCovMatrix: not symmetric\n";
-    return kFailed;
+    return TestStatus::Failed;
   }
 
   for (int i=0; i<cov.GetNrows(); ++i) {
     for (int j=0; j<cov.GetNcols(); ++j) {
        if (std::isnan(cov(i,j))) {
          std::cout << "isCovMatrix: element isnan\n";
-         return kFailed;
+         return TestStatus::Failed;
        }
        if (i==j && cov(i,j) < 0) {
          std::cout << "isCovMatrix: negative diagonal element\n";
-         return kFailed;
+         return TestStatus::Failed;
        }
     }
   }
 
-  return kPassed;
+  return TestStatus::Passed;
 }
 
 
 
-e_testStatus checkSetGetPosMom(bool writeHisto = false) {
+TestStatus checkSetGetPosMom(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   double epsilonLen = 1.E-10;
   double epsilonMom = 1.E-10;
@@ -211,7 +211,7 @@ e_testStatus checkSetGetPosMom(bool writeHisto = false) {
     if (state.getPlane() != plane) {
       std::cout << "plane has changed unexpectedly! \n";
       delete rep;
-      return kFailed;
+      return TestStatus::Failed;
     }
   }
 
@@ -228,16 +228,16 @@ e_testStatus checkSetGetPosMom(bool writeHisto = false) {
     std::cout << std::endl;
 
     delete rep;
-    return kFailed;
+    return TestStatus::Failed;
   }
 
   delete rep;
-  return kPassed;
+  return TestStatus::Passed;
 
 }
 
 
-e_testStatus compareForthBackExtrapolation(bool writeHisto = false) {
+TestStatus compareForthBackExtrapolation(bool writeHisto = false) {
   static std::map<int, std::vector<TH2D*> > histoMap;
 
   static const int nPDGs(5);
@@ -273,7 +273,7 @@ e_testStatus compareForthBackExtrapolation(bool writeHisto = false) {
 
     outfile.Close();
 
-    return kPassed;
+    return TestStatus::Passed;
   }
 
 
@@ -333,7 +333,7 @@ e_testStatus compareForthBackExtrapolation(bool writeHisto = false) {
     std::cerr << e.what();
 
     delete rep;
-    return kException;
+    return TestStatus::Exception;
   }
 
 
@@ -368,7 +368,7 @@ e_testStatus compareForthBackExtrapolation(bool writeHisto = false) {
     std::cerr << e.what();
 
     delete rep;
-    return kException;
+    return TestStatus::Exception;
   }
 
   // compare
@@ -386,21 +386,21 @@ e_testStatus compareForthBackExtrapolation(bool writeHisto = false) {
     std::cout << std::endl;
 
     delete rep;
-    return kFailed;
+    return TestStatus::Failed;
   }
 
   delete rep;
-  return kPassed;
+  return TestStatus::Passed;
 
 }
 
 
-e_testStatus compareForthBackJacNoise(bool writeHisto = false) {
+TestStatus compareForthBackJacNoise(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
-  e_testStatus retVal(kPassed);
+  TestStatus retVal(TestStatus::Passed);
 
   bool fx( randomSign() > 0);
   genfit::MaterialEffects::getInstance()->setNoEffects(!fx);
@@ -493,7 +493,7 @@ e_testStatus compareForthBackJacNoise(bool writeHisto = false) {
 
     delete rep;
     genfit::MaterialEffects::getInstance()->setNoEffects(false);
-    return kException;
+    return TestStatus::Exception;
   }
 
   // back
@@ -509,7 +509,7 @@ e_testStatus compareForthBackJacNoise(bool writeHisto = false) {
 
     delete rep;
     genfit::MaterialEffects::getInstance()->setNoEffects(false);
-    return kException;
+    return TestStatus::Exception;
   }
 
 
@@ -518,7 +518,7 @@ e_testStatus compareForthBackJacNoise(bool writeHisto = false) {
     std::cout << "(origState.getState() - state.getState()) ";
     (origState.getState() - state.getState()).Print();
 
-    retVal = kFailed;
+    retVal = TestStatus::Failed;
   }
 
   // check c
@@ -536,59 +536,59 @@ e_testStatus compareForthBackJacNoise(bool writeHisto = false) {
     std::cout << "(jac_fi * extrapolatedState.getState() + c_fi  -  origState.getState()) ";
     (jac_fi * extrapolatedState.getState() + c_fi  -  origState.getState()).Print();
 
-    retVal = kFailed;
+    retVal = TestStatus::Failed;
   }
 
-  if (isCovMatrix(state.getCov()) == kFailed) {
-    retVal = kFailed;
+  if (isCovMatrix(state.getCov()) == TestStatus::Failed) {
+    retVal = TestStatus::Failed;
   }
 
 
   // compare
-  if (compareMatrices(jac_f, jac_bi, deltaJac) == kFailed) {
+  if (compareMatrices(jac_f, jac_bi, deltaJac) == TestStatus::Failed) {
     std::cout << "jac_f = "; jac_f.Print();
     std::cout << "jac_bi = "; jac_bi.Print();
     std::cout << std::endl;
 
-    retVal = kFailed;
+    retVal = TestStatus::Failed;
   }
 
   // compare
-  if (compareMatrices(jac_b, jac_fi, deltaJac) == kFailed) {
+  if (compareMatrices(jac_b, jac_fi, deltaJac) == TestStatus::Failed) {
     std::cout << "jac_b = "; jac_b.Print();
     std::cout << "jac_fi = "; jac_fi.Print();
     std::cout << std::endl;
 
-    retVal = kFailed;
+    retVal = TestStatus::Failed;
   }
 
   // compare
-  if (compareMatrices(noise_f, noise_bi, deltaNoise) == kFailed) {
+  if (compareMatrices(noise_f, noise_bi, deltaNoise) == TestStatus::Failed) {
     std::cout << "noise_f = "; noise_f.Print();
     std::cout << "noise_bi = "; noise_bi.Print();
     std::cout << std::endl;
 
-    retVal = kFailed;
+    retVal = TestStatus::Failed;
   }
 
   // compare
-  if (compareMatrices(noise_b, noise_fi, deltaNoise) == kFailed) {
+  if (compareMatrices(noise_b, noise_fi, deltaNoise) == TestStatus::Failed) {
     std::cout << "noise_b = "; noise_b.Print();
     std::cout << "noise_fi = "; noise_fi.Print();
     std::cout << std::endl;
 
-    retVal = kFailed;
+    retVal = TestStatus::Failed;
   }
 
 
   if (!fx) {
     // compare
-    if (compareMatrices(jac_f, jac_f_num, deltaJac) == kFailed) {
+    if (compareMatrices(jac_f, jac_f_num, deltaJac) == TestStatus::Failed) {
       std::cout << "jac_f = "; jac_f.Print();
       std::cout << "jac_f_num = "; jac_f_num.Print();
       std::cout << std::endl;
 
-      retVal = kFailed;
+      retVal = TestStatus::Failed;
     }
   }
 
@@ -599,10 +599,10 @@ e_testStatus compareForthBackJacNoise(bool writeHisto = false) {
 }
 
 
-e_testStatus checkStopAtBoundary(bool writeHisto = false) {
+TestStatus checkStopAtBoundary(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   double epsilonLen = 1.E-4; // 1 mu
   //double epsilonMom = 1.E-5; // 10 keV
@@ -635,7 +635,7 @@ e_testStatus checkStopAtBoundary(bool writeHisto = false) {
     std::cerr << e.what();
 
     delete rep;
-    return kException;
+    return TestStatus::Exception;
   }
 
 
@@ -650,19 +650,19 @@ e_testStatus checkStopAtBoundary(bool writeHisto = false) {
       std::cerr << std::endl;
 
       delete rep;
-      return kFailed;
+      return TestStatus::Failed;
     }
 
     delete rep;
-    return kPassed;
+    return TestStatus::Passed;
 
 }
 
 
-e_testStatus checkErrorPropagation(bool writeHisto = false) {
+TestStatus checkErrorPropagation(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   //double epsilonLen = 1.E-4; // 1 mu
   //double epsilonMom = 1.E-5; // 10 keV
@@ -693,30 +693,30 @@ e_testStatus checkErrorPropagation(bool writeHisto = false) {
     std::cerr << e.what();
 
     delete rep;
-    return kException;
+    return TestStatus::Exception;
   }
 
 
   // check
-  if (isCovMatrix(state.getCov()) == kFailed) {
+  if (isCovMatrix(state.getCov()) == TestStatus::Failed) {
 
     origState.Print();
     state.Print();
 
     delete rep;
-    return kFailed;
+    return TestStatus::Failed;
   }
 
   delete rep;
-  return kPassed;
+  return TestStatus::Passed;
 
 }
 
 
-e_testStatus checkExtrapolateToLine(bool writeHisto = false) {
+TestStatus checkExtrapolateToLine(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   double epsilonLen = 1.E-4; // 1 mu
   double epsilonMom = 1.E-5; // 10 keV
@@ -748,7 +748,7 @@ e_testStatus checkExtrapolateToLine(bool writeHisto = false) {
     std::cerr << e.what();
 
     delete rep;
-    return kException;
+    return TestStatus::Exception;
   }
 
 
@@ -765,19 +765,19 @@ e_testStatus checkExtrapolateToLine(bool writeHisto = false) {
       std::cout << "direction * plane normal = " << rep->getMom(state).Unit() * state.getPlane()->getNormal() << "\n";
 
       delete rep;
-      return kFailed;
+      return TestStatus::Failed;
     }
 
     delete rep;
-    return kPassed;
+    return TestStatus::Passed;
 
 }
 
 
-e_testStatus checkExtrapolateToPoint(bool writeHisto = false) {
+TestStatus checkExtrapolateToPoint(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   double epsilonLen = 1.E-4; // 1 mu
   double epsilonMom = 1.E-5; // 10 keV
@@ -808,7 +808,7 @@ e_testStatus checkExtrapolateToPoint(bool writeHisto = false) {
     std::cerr << e.what();
 
     delete rep;
-    return kException;
+    return TestStatus::Exception;
   }
 
 
@@ -823,19 +823,19 @@ e_testStatus checkExtrapolateToPoint(bool writeHisto = false) {
       std::cout << "direction * plane normal = " << rep->getMom(state).Unit() * state.getPlane()->getNormal() << "\n";
 
       delete rep;
-      return kFailed;
+      return TestStatus::Failed;
     }
 
     delete rep;
-    return kPassed;
+    return TestStatus::Passed;
 
 }
 
 
-e_testStatus checkExtrapolateToCylinder(bool writeHisto = false) {
+TestStatus checkExtrapolateToCylinder(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   double epsilonLen = 1.E-4; // 1 mu
   //double epsilonMom = 1.E-5; // 10 keV
@@ -869,7 +869,7 @@ e_testStatus checkExtrapolateToCylinder(bool writeHisto = false) {
 
     delete rep;
 
-    return kException;
+    return TestStatus::Exception;
   }
 
   TVector3 pocaOnLine(lineDirection);
@@ -891,19 +891,19 @@ e_testStatus checkExtrapolateToCylinder(bool writeHisto = false) {
       std::cout << "radiusVec.Mag()-radius = " << radiusVec.Mag()-radius << "\n";
 
       delete rep;
-      return kFailed;
+      return TestStatus::Failed;
     }
 
     delete rep;
-    return kPassed;
+    return TestStatus::Passed;
 
 }
 
 
-e_testStatus checkExtrapolateToSphere(bool writeHisto = false) {
+TestStatus checkExtrapolateToSphere(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   double epsilonLen = 1.E-4; // 1 mu
   //double epsilonMom = 1.E-5; // 10 keV
@@ -936,7 +936,7 @@ e_testStatus checkExtrapolateToSphere(bool writeHisto = false) {
 
     delete rep;
 
-    return kException;
+    return TestStatus::Exception;
   }
 
 
@@ -953,19 +953,19 @@ e_testStatus checkExtrapolateToSphere(bool writeHisto = false) {
       std::cout << "radiusVec.Mag()-radius = " << radiusVec.Mag()-radius << "\n";
 
       delete rep;
-      return kFailed;
+      return TestStatus::Failed;
     }
 
     delete rep;
-    return kPassed;
+    return TestStatus::Passed;
 
 }
 
 
-e_testStatus checkExtrapolateBy(bool writeHisto = false) {
+TestStatus checkExtrapolateBy(bool writeHisto = false) {
 
   if (writeHisto)
-    return kPassed;
+    return TestStatus::Passed;
 
   double epsilonLen = 1.E-3; // 10 mu
 
@@ -995,7 +995,7 @@ e_testStatus checkExtrapolateBy(bool writeHisto = false) {
     extrapolatedLen = rep->extrapolateBy(state, step, false);
   }
   catch (genfit::Exception& e) {
-    return kException;
+    return TestStatus::Exception;
   }
 
   TVector3 posExt(state.getPos());
@@ -1016,11 +1016,11 @@ e_testStatus checkExtrapolateBy(bool writeHisto = false) {
       std::cout << "difference = " << (posOrig - posExt).Mag() << "; step = " << step << "; delta = " <<  (posOrig - posExt).Mag() - fabs(step) << "\n";
 
       delete rep;
-      return kFailed;
+      return TestStatus::Failed;
     }
 
     delete rep;
-    return kPassed;
+    return TestStatus::Passed;
 
 }
 //=====================================================================================================================
@@ -1029,11 +1029,11 @@ e_testStatus checkExtrapolateBy(bool writeHisto = false) {
 //=====================================================================================================================
 
 struct TestCase {
-  TestCase(std::string name, e_testStatus(*function)(bool)) : name_(name), function_(function), nPassed_(0), nFailed_(0), nException_(0) {;}
+  TestCase(std::string name, TestStatus(*function)(bool)) : name_(name), function_(function), nPassed_(0), nFailed_(0), nException_(0) {;}
   void Print() {std::cout << name_ << " \t" << nPassed_ << " \t" << nFailed_ << " \t" << nException_ << "\n";}
 
   std::string name_;
-  e_testStatus(*function_)(bool);
+  TestStatus(*function_)(bool);
   unsigned int nPassed_;
   unsigned int nFailed_;
   unsigned int nException_;
@@ -1080,16 +1080,16 @@ int main() {
   for (unsigned int i=0; i<nTests; ++i) {
 
     for (unsigned int j=0; j<testCases.size(); ++j) {
-      e_testStatus status = testCases[j].function_(false);
+      TestStatus status = testCases[j].function_(false);
       switch (status) {
-      case kPassed:
+      case TestStatus::Passed:
         testCases[j].nPassed_++;
         break;
-      case kFailed:
+      case TestStatus::Failed:
         testCases[j].nFailed_++;
         std::cout << "failed " << testCases[j].name_ << " nr " << i << "\n";
         break;
-      case kException:
+      case TestStatus::Exception:
         testCases[j].nException_++;
         std::cout << "exception at " << testCases[j].name_ << " nr " << i << "\n";
       }
