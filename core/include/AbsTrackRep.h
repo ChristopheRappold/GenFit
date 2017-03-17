@@ -270,7 +270,7 @@ class AbsTrackRep : public TObject {
 
   //! Get the pdg code.
   int getPDG() const {return pdgCode_;}
-
+  void setPDG(int pdg) {pdgCode_ = pdg;}
   //! Get the charge of the particle of the pdg code
   double getPDGCharge() const;
 
