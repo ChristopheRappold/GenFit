@@ -46,8 +46,20 @@ TGeoMaterialInterface::initTrack(double posX, double posY, double posZ,
   // Move to the new point.
   bool result = !gGeoManager->IsSameLocation(posX, posY, posZ, kTRUE);
   // Set the intended direction.
-  gGeoManager->SetCurrentDirection(dirX, dirY, dirZ);
+  //gGeoManager->SetCurrentDirection(dirX, dirY, dirZ);
+  double Norm = dirX*dirX + dirY*dirY + dirZ*dirZ ;
+  double tempDirX=dirX,tempDirY=dirY,tempDirZ=dirZ;
+  if(fabs(Norm-1.)>1e-3)
+    { 
+      tempDirX/=sqrt(Norm);
+      tempDirY/=sqrt(Norm);
+      tempDirZ/=sqrt(Norm);
+    }      
+ 
+  gGeoManager->SetCurrentDirection(tempDirX, tempDirY, tempDirZ);
 
+
+  
   if (debugLvl_ > 0) {
     debugOut << "      TGeoMaterialInterface::initTrack at \n";
     debugOut << "      position:  "; TVector3(posX, posY, posZ).Print();
