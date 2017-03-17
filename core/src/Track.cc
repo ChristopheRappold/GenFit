@@ -178,23 +178,38 @@ Track::~Track() {
   this->Clear();
 }
 
-void Track::Clear(Option_t*)
+void Track::Clear(Option_t* option)
 {
   // This function is needed for TClonesArray embedding.
   // FIXME: smarter containers or pointers needed ...
   for (size_t i = 0; i < trackPoints_.size(); ++i)
-    delete trackPoints_[i];
-
+    {
+      delete trackPoints_[i];
+      trackPoints_[i] = nullptr;
+    }
   trackPoints_.clear();
   trackPointsWithMeasurement_.clear();
 
-  for (std::map< const AbsTrackRep*, FitStatus* >::iterator it = fitStatuses_.begin(); it!= fitStatuses_.end(); ++it)
-    delete it->second;
-  fitStatuses_.clear();
-
-  for (size_t i = 0; i < trackReps_.size(); ++i)
-    delete trackReps_[i];
-  trackReps_.clear();
+  if(option[0] != 'K') // Keep structure ?
+    {
+      for (std::map< const AbsTrackRep*, FitStatus* >::iterator it = fitStatuses_.begin(); it!= fitStatuses_.end(); ++it)
+	{
+	  delete it->second;
+	  it->second = nullptr;
+	}
+      fitStatuses_.clear();
+      for (size_t i = 0; i < trackReps_.size(); ++i)
+	{
+	  delete trackReps_[i];
+	  trackReps_[i]=nullptr;
+	}
+      trackReps_.clear();
+    }
+  else
+    {
+      for (std::map< const AbsTrackRep*, FitStatus* >::iterator it = fitStatuses_.begin(); it!= fitStatuses_.end(); ++it)
+	it->second->ResetStatus();
+    }
 
   cardinalRep_ = 0;
 
@@ -336,10 +351,22 @@ KalmanFitStatus* Track::getKalmanFitStatus(const AbsTrackRep* rep) const {
 
 
 void Track::setFitStatus(FitStatus* fitStatus, const AbsTrackRep* rep) {
-  if (fitStatuses_.find(rep) != fitStatuses_.end())
-    delete fitStatuses_.at(rep);
+  // if (fitStatuses_.find(rep) != fitStatuses_.end())
+  //   delete fitStatuses_.at(rep);
 
-  fitStatuses_[rep] = fitStatus;
+  // fitStatuses_[rep] = fitStatus;
+
+  std::map< const AbsTrackRep*, FitStatus* >::iterator it_rep = fitStatuses_.find(rep);
+  if(it_rep == fitStatuses_.end())
+    {
+      fitStatuses_.insert(std::pair< const AbsTrackRep*, FitStatus* >(rep,fitStatus));
+    }
+  else
+    {
+      FitStatus* tempStat = it_rep->second;
+      delete tempStat;
+      it_rep->second = fitStatus;
+    }
 }
 
 
@@ -558,7 +585,17 @@ void Track::mergeTrack(const Track* other, int id) {
 
 void Track::addTrackRep(AbsTrackRep* trackRep) {
   trackReps_.push_back(trackRep);
-  fitStatuses_[trackRep] = new FitStatus();
+  //fitStatuses_[trackRep] = new FitStatus();
+  const AbsTrackRep* TempRep(trackRep);
+ 
+  std::map<const AbsTrackRep*, FitStatus*>::const_iterator it = fitStatuses_.find(TempRep);
+  
+  if(it == fitStatuses_.end())
+    fitStatuses_.insert(std::pair<const AbsTrackRep*, FitStatus*>(TempRep, new FitStatus()));
+  else
+    {
+      std::cerr << "Track::addTrackRep: TrackRep "<<trackRep<<" already exist !!!"<< std::endl;
+    }
 }
 
 
