@@ -139,6 +139,19 @@ class FitStatus {
   void setChi2(const double& chi2) {chi2_ = chi2;}
   void setNdf(const double& ndf) {ndf_ = ndf;}
 
+  void ResetStatus() 
+  {
+    isFitted_ = false;
+    isFitConvergedFully_=false;
+    isFitConvergedPartially_=false;
+    nFailedPoints_=0;
+    trackHasChanged_=false;
+    charge_=0; 
+    chi2_=-1e99; 
+    ndf_=-1e99;
+  }
+
+  
   virtual void Print(const Option_t* = "") const;
 
  protected:
