@@ -30,19 +30,19 @@
 namespace genfit {
 
 TrackPoint::TrackPoint() :
-  sortingParameter_(0), track_(nullptr), thinScatterer_(nullptr)
+  OwnMeasurements(true), sortingParameter_(0), track_(nullptr), thinScatterer_(nullptr)
 {
   ;
 }
 
 TrackPoint::TrackPoint(Track* track) :
-  sortingParameter_(0), track_(track), thinScatterer_(nullptr)
+  OwnMeasurements(true), sortingParameter_(0), track_(track), thinScatterer_(nullptr)
 {
   ;
 }
 
-TrackPoint::TrackPoint(const std::vector< genfit::AbsMeasurement* >& rawMeasurements, Track* track) :
-  sortingParameter_(0), track_(track), thinScatterer_(nullptr)
+TrackPoint::TrackPoint(const std::vector< genfit::AbsMeasurement* >& rawMeasurements, Track* track, bool Owner_) :
+  OwnMeasurements(Owner_), sortingParameter_(0), track_(track), thinScatterer_(nullptr)
 {
   rawMeasurements_.reserve(rawMeasurements.size());
 
@@ -51,8 +51,8 @@ TrackPoint::TrackPoint(const std::vector< genfit::AbsMeasurement* >& rawMeasurem
   }
 }
 
-TrackPoint::TrackPoint(AbsMeasurement* rawMeasurement, Track* track) :
-  sortingParameter_(0), track_(track), thinScatterer_(nullptr)
+TrackPoint::TrackPoint(AbsMeasurement* rawMeasurement, Track* track, bool Owner_) :
+  OwnMeasurements(Owner_), sortingParameter_(0), track_(track), thinScatterer_(nullptr)
 {
   addRawMeasurement(rawMeasurement);
 }
@@ -60,7 +60,7 @@ TrackPoint::TrackPoint(AbsMeasurement* rawMeasurement, Track* track) :
 
 TrackPoint::TrackPoint(const TrackPoint& rhs) :
   TObject(rhs),
-  sortingParameter_(rhs.sortingParameter_), track_(rhs.track_), thinScatterer_(nullptr)
+  OwnMeasurements(rhs.OwnMeasurements), sortingParameter_(rhs.sortingParameter_), track_(rhs.track_), thinScatterer_(nullptr)
 {
   // clone rawMeasurements
   for (std::vector<AbsMeasurement*>::const_iterator it = rhs.rawMeasurements_.begin(); it != rhs.rawMeasurements_.end(); ++it) {
@@ -82,7 +82,7 @@ TrackPoint::TrackPoint(const TrackPoint& rhs) :
 TrackPoint::TrackPoint(const TrackPoint& rhs,
     const std::map<const AbsTrackRep*, AbsTrackRep*>& map,
     const std::vector<const genfit::AbsTrackRep*> * repsToIgnore) :
-  sortingParameter_(rhs.sortingParameter_), track_(rhs.track_), thinScatterer_(nullptr)
+  OwnMeasurements(rhs.OwnMeasurements), sortingParameter_(rhs.sortingParameter_), track_(rhs.track_), thinScatterer_(nullptr)
 {
   // clone rawMeasurements
   for (std::vector<AbsMeasurement*>::const_iterator it = rhs.rawMeasurements_.begin(); it!=rhs.rawMeasurements_.end(); ++it) {
@@ -127,6 +127,7 @@ void TrackPoint::swap(TrackPoint& other) {
   std::swap(this->track_, other.track_);
   std::swap(this->rawMeasurements_, other.rawMeasurements_);
   std::swap(this->fitterInfos_, other.fitterInfos_);
+  std::swap(this->OwnMeasurements,other.OwnMeasurements);
   this->thinScatterer_.swap(other.thinScatterer_);
 }
 
@@ -135,10 +136,12 @@ TrackPoint::~TrackPoint() {
   // FIXME: We definitely need some smart containers or smart pointers that
   // take care of this, but so far we haven't found a convincing
   // option (2013-07-05).
-  
-  for (size_t i = 0; i < rawMeasurements_.size(); ++i)
-    delete rawMeasurements_[i];
-
+  if(OwnMeasurements==true)
+    {
+      for (size_t i = 0; i < rawMeasurements_.size(); ++i)
+	delete rawMeasurements_[i];
+    }
+ 
   std::map< const AbsTrackRep*, AbsFitterInfo* >::iterator it;
   for (it = fitterInfos_.begin(); it != fitterInfos_.end(); ++it)
     delete it->second;
@@ -184,8 +187,12 @@ KalmanFitterInfo* TrackPoint::getKalmanFitterInfo(const AbsTrackRep* rep) const 
 
 
 void TrackPoint::deleteRawMeasurements() {
-  for (size_t i = 0; i < rawMeasurements_.size(); ++i)
-    delete rawMeasurements_[i];
+  if(OwnMeasurements==true)
+    for (size_t i = 0; i < rawMeasurements_.size(); ++i)
+      {
+	delete rawMeasurements_[i];
+	rawMeasurements_[i] = 0;
+      }
 
   rawMeasurements_.clear();
 }

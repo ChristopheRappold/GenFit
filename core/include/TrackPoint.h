@@ -56,7 +56,7 @@ class TrackPoint : public TObject {
    * AbsMeasurement::setTrackPoint() of each measurement will be called.
    * TrackPoint takes ownership over rawMeasurements.
    */
-  TrackPoint(const std::vector< genfit::AbsMeasurement* >& rawMeasurements, Track* track);
+  TrackPoint(const std::vector< genfit::AbsMeasurement* >& rawMeasurements, Track* track, bool Owner = true);
 
   /**
    * @brief Contructor taking one measurement.
@@ -64,7 +64,7 @@ class TrackPoint : public TObject {
    * AbsMeasurement::setTrackPoint() of the measurement will be called.
    * TrackPoint takes ownership over the rawMeasurement.
    */
-  TrackPoint(genfit::AbsMeasurement* rawMeasurement, Track* track);
+  TrackPoint(genfit::AbsMeasurement* rawMeasurement, Track* track, bool Owner = true);
 
   TrackPoint(const TrackPoint&); // copy constructor
   TrackPoint& operator=(TrackPoint); // assignment operator
@@ -116,6 +116,8 @@ class TrackPoint : public TObject {
 
   void Print(const Option_t* = "") const;
 
+  void setOwnershipMeasurements(bool yes = "true") {OwnMeasurements = yes;} 
+
   /**
    * This function is used when reading the TrackPoint and is called
    * by the owner in order to build fitterInfos_ from vFitterInfos_.
@@ -126,6 +128,7 @@ class TrackPoint : public TObject {
   void fixupRepsForReading();
 
  private:
+  bool OwnMeasurements;
   double sortingParameter_;
 
   //! Pointer to Track where TrackPoint belongs to
