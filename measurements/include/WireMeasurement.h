@@ -86,7 +86,7 @@ class WireMeasurement : public AbsMeasurement {
    * 1: positive (right) side on vector (track direction) x (wire direction)
    */
   void setLeftRightResolution(int lr);
-
+  void SetDriftDistance(double dd) {rawHitCoords_(6) = dd;}
   virtual bool isLeftRightMeasurement() const {return true;}
   virtual int getLeftRightResolution() const {return leftRight_;}
 
