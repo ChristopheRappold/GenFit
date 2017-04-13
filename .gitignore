@@ -1,7 +1,10 @@
 build
 build2/
+build3/
+debug/
 build_t/
 build/
 \.dir-locals\.el
 #include/
 lib/
+*~
