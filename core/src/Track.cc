@@ -1286,6 +1286,21 @@ void Track::Print(const Option_t* option) const {
     } //end loop over reps
 
     printOut << "\n";
+
+  printOut << "=======================================================================================\n";
+  printOut << "genfit::Track, containing " << trackPoints_.size() << " TrackPoints and " << trackReps_.size() << " TrackReps.\n";
+  printOut << " Seed state: "; stateSeed_.Print();
+
+  for (unsigned int i=0; i<trackReps_.size(); ++i) {
+    printOut << " TrackRep Nr. " << i;
+    if (i == cardinalRep_)
+      printOut << " (This is the cardinal rep)";
+    printOut << "\n";
+    trackReps_[i]->Print();
+  }
+  printOut << "=======================================================================================\n";
+
+
     return;
   }
 
