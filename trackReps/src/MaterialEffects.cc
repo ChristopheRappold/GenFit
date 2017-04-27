@@ -474,7 +474,11 @@ double MaterialEffects::dEdxBetheBloch(double betaSquare, double gamma, double g
 {
   static const double betaGammaMin(0.05);
   if (betaSquare*gammaSquare < betaGammaMin*betaGammaMin) {
-    Exception exc("MaterialEffects::dEdxBetheBloch ==> beta*gamma < 0.05, Bethe-Bloch implementation not valid anymore!",__LINE__,__FILE__);
+    std::string tempEx("MaterialEffects::dEdxBetheBloch ==> beta*gamma < 0.05, Bethe-Bloch implementation not valid anymore!");
+    tempEx+=std::to_string(betaSquare);
+    tempEx+=" ";
+    tempEx+=std::to_string(gammaSquare);
+    Exception exc(tempEx,__LINE__,__FILE__);
     exc.setFatal();
     throw exc;
   }
